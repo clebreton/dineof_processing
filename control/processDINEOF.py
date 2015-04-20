@@ -55,41 +55,41 @@ def count_water_pixels(watermask_file, width, height):
     return waterpixel_count
 
 
-def getDINEOFinputFileName(proc_date):
-    return join(dineof_inputDir, "DINEOF_DeM_chl_input_" + proc_date + ".nc")
+def getDINEOFinputFileName(proc_date, input_variable):
+    return join(dineof_inputDir, "DINEOF_DeM_" + input_variable + "_input_" + proc_date + ".nc")
 
 
-def getDINEOFoutputDir(proc_date):
-    return join(dineof_outputBaseDir, "DINEOF_DeM_chl_" + proc_date + "/")
+def getDINEOFoutputDir(proc_date, input_variable):
+    return join(dineof_outputBaseDir, "DINEOF_DeM_" + input_variable + "_" + proc_date + "/")
 
 
-def getDINEOFoutputFileName(proc_date):
-    dineof_outputDir = getDINEOFoutputDir(proc_date)
-    return join(dineof_outputDir, "DINEOF_DeM_chl_output_" + proc_date + ".nc")
+def getDINEOFoutputFileName(proc_date, input_variable):
+    dineof_outputDir = getDINEOFoutputDir(proc_date, input_variable)
+    return join(dineof_outputDir, "DINEOF_DeM_" + input_variable + "_output_" + proc_date + ".nc")
 
 
 def getDINEOFconfFileName(proc_date):
     return join(dineof_inputDir, 'dineof_init_' + proc_date + '.conf')
 
 
-def getUnlogOutputFileName(proc_date):
-    dineof_outputDir = getDINEOFoutputDir(proc_date)
-    return join(dineof_outputDir, "retrans_DINEOF_DeM_chl_output_" + proc_date + ".nc")
+def getUnlogOutputFileName(proc_date, input_variable):
+    dineof_outputDir = getDINEOFoutputDir(proc_date, input_variable)
+    return join(dineof_outputDir, "retrans_DINEOF_DeM_" + input_variable + "_output_" + proc_date + ".nc")
 
 
-def writeDINEOFconfFile(proc_date):
+def writeDINEOFconfFile(proc_date, input_variable):
     conf_filePath = getDINEOFconfFileName(proc_date)
-    dineof_outputDir = join(dineof_outputBaseDir, "DINEOF_DeM_chl_" + proc_date + "/")
+    dineof_outputDir = join(dineof_outputBaseDir, "DINEOF_DeM_" + input_variable + "_" + proc_date + "/")
     if not exists(dineof_outputDir):
         makedirs(dineof_outputDir)
     with open(conf_filePath, 'a') as conf_file:
         conf_file.write(dc.headerPart)
         conf_file.write(dc.dataPart)
-        conf_file.write("data = ['" + getDINEOFinputFileName(proc_date) + "#CHL_mean']\n")
+        conf_file.write("data = ['" + getDINEOFinputFileName(proc_date, input_variable) + "#CHL_mean']\n")
         conf_file.write(dc.maskPart)
         conf_file.write("mask = ['" + watermask_nc_file + "#mask']\n")
         conf_file.write(dc.timePart)
-        conf_file.write("time = '" + getDINEOFinputFileName(proc_date) + "#time'\n")
+        conf_file.write("time = '" + getDINEOFinputFileName(proc_date, input_variable) + "#time'\n")
         conf_file.write(dc.nevPart)
         conf_file.write(dc.neiniPart)
         conf_file.write(dc.ncvPart)
@@ -100,10 +100,10 @@ def writeDINEOFconfFile(proc_date):
         conf_file.write(dc.eofPart)
         conf_file.write(dc.normPart)
         conf_file.write(dc.OutputPart)
-        conf_file.write("Output = '" + getDINEOFoutputDir(proc_date) + "'\n")
+        conf_file.write("Output = '" + getDINEOFoutputDir(proc_date, input_variable) + "'\n")
         conf_file.write(dc.cvPart)
         conf_file.write(dc.resultsPart)
-        conf_file.write("results = ['" + getDINEOFoutputFileName(proc_date) + "#chl']\n")
+        conf_file.write("results = ['" + getDINEOFoutputFileName(proc_date, "var_name") + "#chl']\n")
         conf_file.write(dc.seedPart)
         conf_file.write(dc.cvpPart)
         conf_file.write(dc.csPart)
@@ -117,7 +117,7 @@ def makeDINEOFcube(proc_date, fileList):
                                        int(basename(fileList[0])[17:19]))[1])
     endDate_date = int(jdcal.gcal2jd(int(basename(fileList[-1])[11:15]), int(basename(fileList[-1])[15:17]),
                                      int(basename(fileList[-1])[17:19]))[1])
-    dataset = Dataset(getDINEOFinputFileName(proc_date), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
+    dataset = Dataset(getDINEOFinputFileName(proc_date, variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
     earliestProduct = beampy.ProductIO.readProduct(fileList[0])
     width = earliestProduct.getSceneRasterWidth()
     height = earliestProduct.getSceneRasterHeight()
@@ -243,9 +243,10 @@ def makeDINEOFcube(proc_date, fileList):
 
 
 def unlogDINEOFoutput(proc_date):
-    ori_file = getDINEOFinputFileName(proc_date)  # this is the input to dineof prior to processing
-    in_file = getDINEOFoutputFileName(proc_date)  # this is the dineof output that we use as input for unlog-ing
-    out_file = getUnlogOutputFileName(proc_date)  # this is the unlog-ed output file
+    ori_file = getDINEOFinputFileName(proc_date, variable)  # this is the input to dineof prior to processing
+    in_file = getDINEOFoutputFileName(proc_date,
+                                      "var_name")  # this is the dineof output that we use as input for unlog-ing
+    out_file = getUnlogOutputFileName(proc_date, "var_name")  # this is the unlog-ed output file
     print(ori_file, exists(ori_file))
 
     # read input nc file and attribute variables names
@@ -253,7 +254,6 @@ def unlogDINEOFoutput(proc_date):
     width = len(input_file.dimensions['dim001'])
     height = len(input_file.dimensions['dim002'])
     time_len = len(input_file.dimensions['dim003'])
-    # tsm = input_file.variables['tsm']
     variable = input_file.variables[input_variable]
 
     # get geolocation from original file
@@ -284,23 +284,25 @@ def unlogDINEOFoutput(proc_date):
     time_variable.long_name = 'time'
 
     if variable == 'tsm':
-        # target_tsm_variable = dataset.createVariable('tsm', np.float32, ('time', 'latitude', 'longitude'), fill_value=9999.0)
-        # target_tsm_variable.missing_value = 9999.0
-        # target_tsm_variable.units = 'g.m^-3 '
-        # target_tsm_variable.long_name = 'tsm'
-    else if blabl == ol:
+        target_tsm_variable = dataset.createVariable('tsm', np.float32, ('time', 'latitude', 'longitude'),
+                                                     fill_value=9999.0,
+                                                     zlib=True, complevel=4, least_significant_digit=3)
+        target_tsm_variable.missing_value = 9999.0
+        target_tsm_variable.units = 'g.m^-3 '
+        target_tsm_variable.long_name = 'tsm'
 
-    else if variable == 'chl':
+
+    elif variable == 'chl':
         target_chl_variable = dataset.createVariable('chl', np.float32, ('time', 'latitude', 'longitude'),
                                                      fill_value=9999.0,
                                                      zlib=True, complevel=4, least_significant_digit=3)
         target_chl_variable.missing_value = 9999.0
         target_chl_variable.units = 'mg/l'
         target_chl_variable.long_name = 'chlorophyll a concentration'
+
     else:
         print('no input variable defined for dineof unlog, exiting')
         exit(-1)
-
 
     lat_variable[:] = lat_ori[:]
     lon_variable[:] = lon_ori[:]
@@ -316,13 +318,14 @@ def unlogDINEOFoutput(proc_date):
         retrans_variable = np.power(10, time_data)
         retrans_variable = np.where(retrans_variable > 200.0, 1.0, retrans_variable)
         if variable == 'tsm':
-    target_tsm_variable[:, x:x + 1, :] = retrans_variable
-    else if variable == 'chl':
-    arget_chl_variable[:, x:x + 1, :] = retrans_variable
+            target_tsm_variable[:, x:x + 1, :] = retrans_variable
+        elif variable == 'chl':
+            target_chl_variable[:, x:x + 1, :] = retrans_variable
 
     input_file.close()
     original_file.close()
     dataset.close()
+
 
 if __name__ == '__main__':
     argc = len(argv)
@@ -332,7 +335,7 @@ if __name__ == '__main__':
         proc_date = argv[1]
         print("Processing date: ", proc_date)
 
-    writeDINEOFconfFile(proc_date)
+    writeDINEOFconfFile(proc_date, "var_name")
 
     proc_year = int(proc_date[:4])
     proc_month = int(proc_date[4:6])
