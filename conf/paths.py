@@ -1,18 +1,20 @@
 #!/usr/bin/env python3
 __author__ = 'uwe'
 
-inputBaseDir = "/fs14/EOservices/OutputPool/MODISA/L3_DeM/"
+inputBaseDir = "/data/carole/INPUT_data/"
 
 trigger_dir = inputBaseDir + "signals/"
 trigger_file = trigger_dir + "dineof_trigger.txt"
 trigger_lock = trigger_file.replace("txt", "lck")
 
-productionBaseDir = '/opt/demarine/data/'
-dineof_inputDir  = productionBaseDir + 'dineof_input/'
-dineof_outputBaseDir = productionBaseDir + 'dineof_output/'
+productionBaseDir = '/data/carole/DeMarine_dineof_nrt/'
+dineof_inputDir  = productionBaseDir + 'input_files/'
+dineof_outputBaseDir = productionBaseDir + 'output_files/'
 
-watermask_nc_file = dineof_inputDir + 'watermask_DeMarine_coarse.nc'
-watermask_dim_file = dineof_inputDir + 'watermask_DeMarine_coarse.dim'
+watermask_coarse_nc_file = dineof_inputDir + 'watermask_DeMarine_coarse.nc'
+watermask_coarse_dim_file = dineof_inputDir + 'watermask_DeMarine_coarse.dim'
+watermask_fine_nc_file = dineof_inputDir + 'watermask_DeMarine_fine.nc'
+watermask_fine_dim_file = dineof_inputDir + 'watermask_DeMarine_fine.dim'
 
 dineof_home = '/opt/dineof-3.0/'
 dineof_executable = dineof_home + 'dineof'

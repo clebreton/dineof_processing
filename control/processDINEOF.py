@@ -11,7 +11,7 @@ from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, wate
 from conf.DINEOFparams import variables, valid_pixel_threshold, input_variable
 import conf.DINEOFconstants as dc
 
-import beampy
+import snappy
 from netCDF4 import Dataset
 import numpy as np
 import jdcal
@@ -41,7 +41,7 @@ def getInputProductsList(delta_days):
 
 
 def count_water_pixels(watermask_file, width, height):
-    watermask_product = beampy.ProductIO.readProduct(watermask_file)
+    watermask_product = snappy.ProductIO.readProduct(watermask_file)
     water_band = watermask_product.getBand('land_water_fraction')
     waterpixel_count = 0
     for y in range(height):
@@ -118,7 +118,7 @@ def makeDINEOFcube(proc_date, fileList):
     endDate_date = int(jdcal.gcal2jd(int(basename(fileList[-1])[11:15]), int(basename(fileList[-1])[15:17]),
                                      int(basename(fileList[-1])[17:19]))[1])
     dataset = Dataset(getDINEOFinputFileName(proc_date, variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
-    earliestProduct = beampy.ProductIO.readProduct(fileList[0])
+    earliestProduct = snappy.ProductIO.readProduct(fileList[0])
     width = earliestProduct.getSceneRasterWidth()
     height = earliestProduct.getSceneRasterHeight()
     dataset.createDimension("longitude", width)
@@ -139,13 +139,13 @@ def makeDINEOFcube(proc_date, fileList):
     time_variable.units = 'days since 1970-1-1 0:0:0'
     time_variable.long_name = 'time'
 
-    geo_pos = beampy.GeoPos.newGeoPos(0, 0)
+    geo_pos = snappy.GeoPos.newGeoPos(0, 0)
     for x in range(width):
-        earliestProduct.getGeoCoding().getGeoPos(beampy.PixelPos.newPixelPos(x + 0.5, 0), geo_pos)
+        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos.newPixelPos(x + 0.5, 0), geo_pos)
         lon_variable[x] = geo_pos.getLon()
 
     for y in range(height):
-        earliestProduct.getGeoCoding().getGeoPos(beampy.PixelPos.newPixelPos(0, y + 0.5), geo_pos)
+        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos.newPixelPos(0, y + 0.5), geo_pos)
         lat_variable[y] = geo_pos.getLat()
 
     for var in variables:
@@ -189,7 +189,7 @@ def makeDINEOFcube(proc_date, fileList):
         print('Reading product \'' + input_file + '\'')
         current_path = input_file
         if exists(input_file):
-            current_product = beampy.ProductIO.readProduct(input_file)
+            current_product = snappy.ProductIO.readProduct(input_file)
             if input_file == fileList[0]:
                 last_valid_product_path = current_path
 
@@ -220,7 +220,7 @@ def makeDINEOFcube(proc_date, fileList):
             current_product.dispose()
             if not last_valid_product_path:
                 raise ValueError("first product is missing")
-            current_product = beampy.ProductIO.readProduct(last_valid_product_path)
+            current_product = snappy.ProductIO.readProduct(last_valid_product_path)
         for var in variables:
             current_band = current_product.getBand(var)
             target_variable = dataset.variables[var]
