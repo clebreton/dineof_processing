@@ -69,8 +69,8 @@ for _path in [modisL3_DeM_CoarsePath]:
 # listSize = exit_on_empty_list(srcList)
 # srcList.sort()
 # L3_2008-01-01_2008-01-01
+source_file = 'L3_MODISA_BC_' + _year + '-'+ _month + '-' + _day + '_' + _year+'-'+_month+'-'+_day+'_NSBS_2000m_v1.0nrt.nc'
 # source_file = 'L3_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + '.nc'
-source_file = 'L3_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + '.nc'
 
 # outputProductPath = modisL3_ECOHAMPath + 'cb_ns_' + back_date + '_eo_bc_lat_lon_ecoham.dim'
 outputProductFinePath = modisL3_DeM_FinePath + 'reprojected_DeMarine_' + back_date + '_fine_grid.dim'
