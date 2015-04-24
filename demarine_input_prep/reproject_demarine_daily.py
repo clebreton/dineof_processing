@@ -1,15 +1,13 @@
 __author__ = 'carole'
 
 from sys import argv
-from os import listdir, makedirs, remove, system
-from os.path import basename, exists
+from os import  makedirs, system
+from os.path import exists
 from demarine_input_prep.demarine_conf import gptProcessor, DeMarine_fine_grid_graph_file, \
     DeMarine_coarse_grid_graph_file
-from conf.utilities import getDOY, ensureTrailingSlash, \
-    exit_on_empty_list
-from demarine_input_prep.demarine_path import modisL3_TSMBasePath, modisL3_TSMDemarine_CoarseGrid_Path, \
+from conf.utilities import getDOY, ensureTrailingSlash
+from demarine_input_prep.demarine_paths import modisL3_TSMBasePath, modisL3_TSMDemarine_CoarseGrid_Path, \
     modisL3_TSMDemarine_FineGrid_Path
-from waqss_processing.nasa.modis.seadas_processing.conf.params import _site
 
 
 def printUsage():
@@ -71,6 +69,7 @@ for _path in [modisL3_DeM_CoarsePath]:
 # listSize = exit_on_empty_list(srcList)
 # srcList.sort()
 # L3_2008-01-01_2008-01-01
+# source_file = 'L3_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + '.nc'
 source_file = 'L3_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + '.nc'
 
 # outputProductPath = modisL3_ECOHAMPath + 'cb_ns_' + back_date + '_eo_bc_lat_lon_ecoham.dim'
