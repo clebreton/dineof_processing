@@ -15,6 +15,8 @@ modisL3_TSMBasePath = '/data/carole/INPUT_data/'
 modisL3_TSMDemarine_FineGrid_Path = modisL3_TSMBasePath + 'L3_REPROJECT_FINE/'
 modisL3_TSMDemarine_CoarseGrid_Path = modisL3_TSMBasePath + 'L3_REPROJECT_COARSE/'
 
+modisL3_nc_CoarseGrid_Path = modisL3_TSMDemarine_CoarseGrid_Path + 'nc/'
+modisL3_nc_FineGrid_Path = modisL3_TSMDemarine_FineGrid_Path + 'nc/'
 
 seadasHome = '/home/uwe/tools/seadas/6.4/'                  # bcserver7 (deployment)
 

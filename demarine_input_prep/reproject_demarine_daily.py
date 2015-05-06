@@ -1,7 +1,7 @@
 __author__ = 'carole'
 
 from sys import argv
-from os import  makedirs, system
+from os import makedirs, system
 from os.path import exists
 from demarine_input_prep.demarine_conf import gptProcessor, DeMarine_fine_grid_graph_file, \
     DeMarine_coarse_grid_graph_file
@@ -34,7 +34,6 @@ _day = back_date[6:]
 _doy = getDOY(_year, _month, _day)
 print("Processing date " + back_date + " (DOY = " + str(_doy) + ").")
 
-
 modisL3_TSMPath = ensureTrailingSlash(modisL3_TSMBasePath)
 modisL3_DeM_FinePath = ensureTrailingSlash(modisL3_TSMDemarine_FineGrid_Path)
 modisL3_DeM_CoarsePath = ensureTrailingSlash(modisL3_TSMDemarine_CoarseGrid_Path)
@@ -51,8 +50,8 @@ for _path in [modisL3_DeM_CoarsePath]:
 # try:
 # srcList = listdir(modisL3_TSMPath)
 # except OSError:
-#     print("Cannot open ", modisL3_TSMPath+ "! Now exiting...")
-#     exit(1)
+# print("Cannot open ", modisL3_TSMPath+ "! Now exiting...")
+# exit(1)
 # else:
 #     listSize = exit_on_empty_list(srcList)
 #     print(listSize)
@@ -69,14 +68,13 @@ for _path in [modisL3_DeM_CoarsePath]:
 # listSize = exit_on_empty_list(srcList)
 # srcList.sort()
 # L3_2008-01-01_2008-01-01
-source_file = 'L3_MODISA_BC_' + _year + '-'+ _month + '-' + _day + '_' + _year+'-'+_month+'-'+_day+'_NSBS_2000m_v1.0nrt.nc'
+source_file = 'L3_MODISA_BC_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + \
+              '_NSBS_2000m_v1.0nrt.nc'
 # source_file = 'L3_' + _year + '-' + _month + '-' + _day + '_' + _year + '-' + _month + '-' + _day + '.nc'
 
 # outputProductPath = modisL3_ECOHAMPath + 'cb_ns_' + back_date + '_eo_bc_lat_lon_ecoham.dim'
 outputProductFinePath = modisL3_DeM_FinePath + 'reprojected_DeMarine_' + back_date + '_fine_grid.dim'
 outputProductCoarsePath = modisL3_DeM_CoarsePath + 'reprojected_DeMarine_' + back_date + '_coarse_grid.dim'
-
-
 
 reproj_fine_processingCall = gptProcessor + ' ' + DeMarine_fine_grid_graph_file + ' -Ssource=' + modisL3_TSMPath + source_file + ' -Pfile=' + outputProductFinePath
 system(reproj_fine_processingCall)

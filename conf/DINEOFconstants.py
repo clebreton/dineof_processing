@@ -75,7 +75,7 @@ toliterPart += "toliter = 1.0e-3\n"
 recPart  = "\n"
 recPart += "# Parameter 'rec' for complete reconstruction of the matrix\n"
 recPart += "# rec=1 will reconstruct all points; rec=0 only missing points\n"
-recPart += "rec = 0\n"
+recPart += "rec = 1\n"
 
 eofPart  = "\n"
 eofPart += "# Parameter 'eof' for writing the left and right modes of the\n"

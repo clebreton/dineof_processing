@@ -6,8 +6,8 @@ from datetime import date, timedelta
 from os import makedirs, system
 from os.path import basename, exists, join
 from sys import argv, exit
-from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, watermask_dim_file, watermask_nc_file, \
-    dineof_executable
+from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_coarse_nc_file, watermask_coarse_dim_file, \
+    watermask_fine_nc_file, watermask_fine_dim_file, dineof_executable
 from conf.DINEOFparams import variables, valid_pixel_threshold, input_variable
 import conf.DINEOFconstants as dc
 
@@ -34,14 +34,14 @@ def getInputProductsList(delta_days):
     for day in range(-10 + delta_days, 365):
         _backDate = getBackDate(day)
         # inputProduct = join(inputBaseDir , _backDate[:4] + '/' + 'cb_ns_' + _backDate + '_eo_bc_lat_lon_ecoham.dim')
-        inputProduct = join(inputBaseDir, _backDate[:4] + '/' + 'MODISA_DeM_' + _backDate + '.dim')
+        inputProduct = join(inputBaseDir, 'reprojected_DeMarine_' + _backDate + '_coarse_grid.dim')
         inputProductsList.append(inputProduct)
     inputProductsList.sort()
     return inputProductsList
 
 
-def count_water_pixels(watermask_file, width, height):
-    watermask_product = snappy.ProductIO.readProduct(watermask_file)
+def count_water_pixels(watermask_coarse_dim_file, width, height):
+    watermask_product = snappy.ProductIO.readProduct(watermask_coarse_dim_file)
     water_band = watermask_product.getBand('land_water_fraction')
     waterpixel_count = 0
     for y in range(height):
@@ -69,7 +69,7 @@ def getDINEOFoutputFileName(proc_date, input_variable):
 
 
 def getDINEOFconfFileName(proc_date):
-    return join(dineof_inputDir, 'dineof_init_' + proc_date + '.conf')
+    return join(dineof_initDir, 'dineof_init_' + proc_date + '.conf')
 
 
 def getUnlogOutputFileName(proc_date, input_variable):
@@ -87,7 +87,7 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write(dc.dataPart)
         conf_file.write("data = ['" + getDINEOFinputFileName(proc_date, input_variable) + "#CHL_mean']\n")
         conf_file.write(dc.maskPart)
-        conf_file.write("mask = ['" + watermask_nc_file + "#mask']\n")
+        conf_file.write("mask = ['" + watermask_coarse_nc_file + "#mask']\n")
         conf_file.write(dc.timePart)
         conf_file.write("time = '" + getDINEOFinputFileName(proc_date, input_variable) + "#time'\n")
         conf_file.write(dc.nevPart)
@@ -103,7 +103,7 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write("Output = '" + getDINEOFoutputDir(proc_date, input_variable) + "'\n")
         conf_file.write(dc.cvPart)
         conf_file.write(dc.resultsPart)
-        conf_file.write("results = ['" + getDINEOFoutputFileName(proc_date, "var_name") + "#chl']\n")
+        conf_file.write("results = ['" + getDINEOFoutputFileName(proc_date, input_variable) + "#chl']\n")
         conf_file.write(dc.seedPart)
         conf_file.write(dc.cvpPart)
         conf_file.write(dc.csPart)
@@ -113,11 +113,11 @@ def writeDINEOFconfFile(proc_date, input_variable):
 def makeDINEOFcube(proc_date, fileList):
     skippedFilesLogPath = dineof_inputDir + 'skipped_files_DeM_' + proc_date + '.txt'
     skippedFilesLog = open(skippedFilesLogPath, 'a')
-    startDate_date = int(jdcal.gcal2jd(int(basename(fileList[0])[11:15]), int(basename(fileList[0])[15:17]),
-                                       int(basename(fileList[0])[17:19]))[1])
-    endDate_date = int(jdcal.gcal2jd(int(basename(fileList[-1])[11:15]), int(basename(fileList[-1])[15:17]),
-                                     int(basename(fileList[-1])[17:19]))[1])
-    dataset = Dataset(getDINEOFinputFileName(proc_date, variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
+    startDate_date = int(jdcal.gcal2jd(int(basename(fileList[0])[21:25]), int(basename(fileList[0])[25:27]),
+                                       int(basename(fileList[0])[27:29]))[1])
+    endDate_date = int(jdcal.gcal2jd(int(basename(fileList[-1])[21:25]), int(basename(fileList[-1])[25:27]),
+                                     int(basename(fileList[-1])[27:29]))[1])
+    dataset = Dataset(getDINEOFinputFileName(proc_date, input_variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
     earliestProduct = snappy.ProductIO.readProduct(fileList[0])
     width = earliestProduct.getSceneRasterWidth()
     height = earliestProduct.getSceneRasterHeight()
@@ -139,13 +139,13 @@ def makeDINEOFcube(proc_date, fileList):
     time_variable.units = 'days since 1970-1-1 0:0:0'
     time_variable.long_name = 'time'
 
-    geo_pos = snappy.GeoPos.newGeoPos(0, 0)
+    geo_pos = snappy.GeoPos(0, 0)
     for x in range(width):
-        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos.newPixelPos(x + 0.5, 0), geo_pos)
+        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos(x + 0.5, 0), geo_pos)
         lon_variable[x] = geo_pos.getLon()
 
     for y in range(height):
-        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos.newPixelPos(0, y + 0.5), geo_pos)
+        earliestProduct.getGeoCoding().getGeoPos(snappy.PixelPos(0, y + 0.5), geo_pos)
         lat_variable[y] = geo_pos.getLat()
 
     for var in variables:
@@ -163,7 +163,7 @@ def makeDINEOFcube(proc_date, fileList):
                                           zlib=True,
                                           complevel=4, least_significant_digit=3)
         variable.missing_value = 9999.0
-    waterpixel_count = count_water_pixels(watermask_dim_file, width, height)
+    waterpixel_count = count_water_pixels(watermask_coarse_dim_file, width, height)
 
     time_index = 0
     skipped_products_count = 0
@@ -176,9 +176,9 @@ def makeDINEOFcube(proc_date, fileList):
     for date in range(startDate_date, endDate_date + 1):
         time_variable[time_index] = date - base_jd
         if file_index + 1 < len(fileList):
-            current_date = int(jdcal.gcal2jd(int(basename(fileList[file_index + 1])[11:15]),
-                                             int(basename(fileList[file_index + 1])[15:17]),
-                                             int(basename(fileList[file_index + 1])[17:19]))[1])
+            current_date = int(jdcal.gcal2jd(int(basename(fileList[file_index + 1])[21:25]),
+                                             int(basename(fileList[file_index + 1])[25:27]),
+                                             int(basename(fileList[file_index + 1])[27:29]))[1])
             if current_date <= date:
                 file_index += 1
 
@@ -225,11 +225,10 @@ def makeDINEOFcube(proc_date, fileList):
             current_band = current_product.getBand(var)
             target_variable = dataset.variables[var]
             for y in range(height):
-                current_band.readPixelsFloat(0, y, width, 1, data)
+                current_band.readPixels(0, y, width, 1, data)
                 data = data.reshape((1, 1, width))
                 data = np.log10(data)
-                data = np.where(np.isneginf(data), 9999.0, data)
-                data = np.where(np.isnan(data), 9999.0, data)
+                data = np.where(data == current_band.getNoDataValue(), 9999.0, data)
                 target_variable[time_index: time_index + 1, y: y + 1, 0: width] = data
 
         current_product.dispose()
@@ -243,10 +242,10 @@ def makeDINEOFcube(proc_date, fileList):
 
 
 def unlogDINEOFoutput(proc_date):
-    ori_file = getDINEOFinputFileName(proc_date, variable)  # this is the input to dineof prior to processing
+    ori_file = getDINEOFinputFileName(proc_date, input_variable)  # this is the input to dineof prior to processing
     in_file = getDINEOFoutputFileName(proc_date,
-                                      "var_name")  # this is the dineof output that we use as input for unlog-ing
-    out_file = getUnlogOutputFileName(proc_date, "var_name")  # this is the unlog-ed output file
+                                      input_variable)  # this is the dineof output that we use as input for unlog-ing
+    out_file = getUnlogOutputFileName(proc_date, input_variable)  # this is the unlog-ed output file
     print(ori_file, exists(ori_file))
 
     # read input nc file and attribute variables names
@@ -316,11 +315,12 @@ def unlogDINEOFoutput(proc_date):
     for x in range(max_x):
         time_data = variable[:, x:x + 1, :]
         retrans_variable = np.power(10, time_data)
-        retrans_variable = np.where(retrans_variable > 200.0, 1.0, retrans_variable)
         if variable == 'tsm':
+            retrans_variable = np.where(retrans_variable > 200.0, 1.0, retrans_variable)
             target_tsm_variable[:, x:x + 1, :] = retrans_variable
         elif variable == 'chl':
-            target_chl_variable[:, x:x + 1, :] = retrans_variable
+            convert_chl = np.ma.where((retrans_chl <= 100.0), retrans_variable, 100.0)
+            target_chl_variable[:, x:x + 1, :] = convert_chl
 
     input_file.close()
     original_file.close()
@@ -335,7 +335,7 @@ if __name__ == '__main__':
         proc_date = argv[1]
         print("Processing date: ", proc_date)
 
-    writeDINEOFconfFile(proc_date, "var_name")
+    writeDINEOFconfFile(proc_date, input_variable)
 
     proc_year = int(proc_date[:4])
     proc_month = int(proc_date[4:6])
