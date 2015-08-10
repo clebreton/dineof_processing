@@ -1,0 +1,26 @@
+<graph id="dineof_subset_nc_writer">
+    <version>1.0</version>
+    <node id="dineof_subset">
+        <operator>Subset</operator>
+        <sources>
+            <source>${source}</source>
+        </sources>
+        <parameters>
+            <geoRegion>POLYGON((-3.0 48.5, -3.0 60.0, 12.0 60.0, 12.0 48.5, -3.0 48.5))</geoRegion>
+            <copyMetadata>true</copyMetadata>
+        </parameters>
+    </node>
+    <node id="WNC">
+        <operator>Write</operator>
+        <sources>
+            <source>dineof_subset</source>
+        </sources>
+        <parameters>
+            <file>${file}</file>
+            <formatName>BEAM-DIMAP</formatName>
+            <deleteOutputOnFailure>false</deleteOutputOnFailure>
+            <writeEntireTileRows>true</writeEntireTileRows>
+            <clearCacheAfterRowWrite>false</clearCacheAfterRowWrite>
+        </parameters>
+    </node>
+</graph>

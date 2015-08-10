@@ -13,6 +13,7 @@ beamProcessingConfDir ='/data/carole/dineof_processing/demarine_input_prep/'
 
 DeMarine_fine_grid_graph_file = beamProcessingConfDir + 'reproject_BSH_fine.xml'
 DeMarine_coarse_grid_graph_file = beamProcessingConfDir + 'reproject_BSH_coarse.xml'
+subset_graph_file = beamProcessingConfDir + 'subset4DinEOF.xml'
 
 cobios_chl_palette = '/home/uwe/tools/pconvert/color_palettes/chl_cobios.cpd'
 

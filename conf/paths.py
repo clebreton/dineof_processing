@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 __author__ = 'uwe'
 
-inputBaseDir = "/data/carole/INPUT_data/L3_REPROJECT_COARSE/"
-
-trigger_dir = inputBaseDir + "signals/"
-trigger_file = trigger_dir + "dineof_trigger.txt"
-trigger_lock = trigger_file.replace("txt", "lck")
+baseDir = "/data/carole/INPUT_data/"
+inputBaseDir = baseDir + "L3_REPROJECT_COARSE/"
+trigger_dir = baseDir + "signals/"
 
 productionBaseDir = '/data/carole/DeMarine_dineof_nrt/'
 dineof_initDir = productionBaseDir + 'init_files/'
 dineof_inputDir  = productionBaseDir + 'input_files/'
+intermediate_Dir = baseDir + "L3_subsets"
 dineof_outputBaseDir = productionBaseDir + 'output_files/'
 
 watermask_dir = productionBaseDir + 'watermasks/'

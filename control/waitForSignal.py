@@ -1,41 +1,52 @@
 #!/usr/bin/env python3
 __author__ = 'uwe'
 
-from os import rename, system, remove
-from os.path import exists
-from sys import exit
-from time import sleep
-from conf.paths import trigger_file, trigger_lock
+from os import system, chdir
+from sys import argv, exit
+from conf.paths import trigger_dir
+from conf.utilities import getBackDateStr
+from pathlib import Path
+from demarine_input_prep.demarine_paths import modisL3_TSMBasePath
+from glob import glob
 
-def read_date(filePath):
-    _file = open(filePath, 'r')
-    try:
-        line = _file.readline()
-        return line
-    except IOError as err:
-        print(("Could not open " + trigger_file).format(err))
-        exit(1)
-
+def printUsage():
+    print("Usage: ", argv[0], " backDay")
+    print("where backDay is the number of days before today")
+    print("e.g. 1 means yesterday etc...\n")
+    exit(1)
 
 if __name__ == '__main__':
-    if exists(trigger_file):
-        print("Trigger file found. Starting DINEOF processing...")
-        rename(trigger_file, trigger_lock)
-        proc_date = read_date(trigger_lock)[:8]
-
-        print("Date is ", proc_date)
-
-        # Processing part comes here
-        syscall = "/bin/bash -c \"export LD_LIBRARY_PATH=/etc/alternatives/jdk_home/jre/lib/amd64/server; " \
-                  "export BEAM_HOME=/opt/beam-4.11; export PYTHONPATH=/opt/cobios/dineof_processing; " \
-                  "python3 /opt/cobios/dineof_processing/control/processDINEOF.py " + proc_date + "\""
-        system(syscall)
-
-        try:
-            remove(trigger_lock)
-        except EnvironmentError as err:
-            print("Trigger lock file has disappeared!".format(err))
+    argc = len(argv)
+    if argc < 2:
+        printUsage()
     else:
-        print("\nTrigger file " + trigger_file + " not found. Nothing to do.\n")
-        exit(1)
+        backDay = argv[1]
+        procDate = getBackDateStr(int(backDay))
+        procYear = procDate[:4]
+        procMonth = procDate[4:6]
+        procDay = procDate[6:]
+        print("Processing date: ", procDate)
+        # exit(1)
 
+    trigger_lock = trigger_dir + procDate
+    _tp = Path(trigger_lock)
+    source_list = glob(modisL3_TSMBasePath + '*' + procYear + '-' + procMonth + '-' + procDay + '_' + procYear + '-' + procMonth + '-' + procDay + '*')
+    print(source_list)
+    if source_list:
+        source_file = source_list[0]
+    _sp = Path(source_file)
+    print(procDate, procYear, procMonth, procDay, _sp, _sp.exists())
+    # exit(1)
+
+    if _sp.exists() and not _tp.exists():
+        print("New source file found. Starting DINEOF processing...")
+        _tp.touch() # Avoid multiple processings through crontab
+        # Processing part comes here
+        syscall = "/bin/bash -c \"export PYTHONPATH=/data/carole/dineof_processing; " \
+                  "python3 /data/carole/dineof_processing/control/processDINEOF.py " + procDate + "\""
+        print("Executing: ", syscall)
+        system(syscall)
+    else:
+        print("\nNo new source file found. Nothing to do.\n")
+        exit(1)
+#TODO make break types clearer

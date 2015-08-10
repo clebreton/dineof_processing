@@ -1,7 +1,7 @@
 __author__ = 'carole'
 
 '''
-recursively creates netcdf files out of beam dimap products
+creates one netcdf file out of one beam dimap product
 created for DeMarine nc exchange, can be adapted to others requirements:
 nc files in the correct projection (dimap files must already be reprojected),
 written in 4D, even if the depth has only one entry. Time should be unlimited.
@@ -58,8 +58,20 @@ input_directory = modisL3_TSMDemarine_CoarseGrid_Path
 output_directory = modisL3_nc_CoarseGrid_Path
 
 
-input_files = [f for f in sorted(os.listdir(input_directory)) if
-               os.path.isfile(os.path.join(input_directory, f)) and os.path.basename(f).endswith('.dim')]
+# input_file = [f for f in sorted(os.listdir(input_directory)) if
+#                os.path.isfile(os.path.join(input_directory, f)) and os.path.basename(f).endswith('.dim')]
+input_files = ['reprojected_DeMarine_20150521_coarse_grid.dim',
+ 'reprojected_DeMarine_20150522_coarse_grid.dim',
+ 'reprojected_DeMarine_20150523_coarse_grid.dim',
+ 'reprojected_DeMarine_20150524_coarse_grid.dim',
+ 'reprojected_DeMarine_20150525_coarse_grid.dim']  # ,
+#  'reprojected_DeMarine_20150512_coarse_grid.dim',
+#  'reprojected_DeMarine_20150513_coarse_grid.dim',
+#  'reprojected_DeMarine_20150514_coarse_grid.dim',
+#  'reprojected_DeMarine_20150515_coarse_grid.dim',
+#  'reprojected_DeMarine_20150516_coarse_grid.dim',
+#  'reprojected_DeMarine_20150517_coarse_grid.dim',
+#  'reprojected_DeMarine_20150518_coarse_grid.dim',]
 
 # to get the lats and lons
 

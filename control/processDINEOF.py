@@ -6,9 +6,10 @@ from datetime import date, timedelta
 from os import makedirs, system
 from os.path import basename, exists, join
 from sys import argv, exit
-from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_coarse_nc_file, watermask_coarse_dim_file, \
-    watermask_fine_nc_file, watermask_fine_dim_file, dineof_executable
+from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_coarse_nc_file, \
+    watermask_coarse_dim_file, dineof_executable
 from conf.DINEOFparams import variables, valid_pixel_threshold, input_variable
+from conf.utilities import getBackDateStr as getBackDate
 import conf.DINEOFconstants as dc
 
 import snappy
@@ -23,17 +24,10 @@ def printUsage():
     print("like e.g. 20131220\n")
     exit(1)
 
-
-def getBackDate(backDay):
-    _back_date = date.today() - timedelta(backDay)
-    return str(_back_date.year) + str(_back_date.month).zfill(2) + str(_back_date.day).zfill(2)
-
-
 def getInputProductsList(delta_days):
     inputProductsList = []
     for day in range(-10 + delta_days, 365):
         _backDate = getBackDate(day)
-        # inputProduct = join(inputBaseDir , _backDate[:4] + '/' + 'cb_ns_' + _backDate + '_eo_bc_lat_lon_ecoham.dim')
         inputProduct = join(inputBaseDir, 'reprojected_DeMarine_' + _backDate + '_coarse_grid.dim')
         inputProductsList.append(inputProduct)
     inputProductsList.sort()
@@ -74,7 +68,7 @@ def getDINEOFconfFileName(proc_date):
 
 def getUnlogOutputFileName(proc_date, input_variable):
     dineof_outputDir = getDINEOFoutputDir(proc_date, input_variable)
-    return join(dineof_outputDir, "retrans_DINEOF_DeM_" + input_variable + "_output_" + proc_date + ".nc")
+    return join(dineof_outputDir, "retrans_DINEOF_DeM_coarse_" + input_variable + "_output_" + proc_date + ".nc")
 
 
 def writeDINEOFconfFile(proc_date, input_variable):
@@ -242,6 +236,8 @@ def makeDINEOFcube(proc_date, fileList):
 
 
 def unlogDINEOFoutput(proc_date):
+    # creates empty files!
+    #TODO: fix
     ori_file = getDINEOFinputFileName(proc_date, input_variable)  # this is the input to dineof prior to processing
     in_file = getDINEOFoutputFileName(proc_date,
                                       input_variable)  # this is the dineof output that we use as input for unlog-ing
@@ -290,7 +286,6 @@ def unlogDINEOFoutput(proc_date):
         target_tsm_variable.units = 'g.m^-3 '
         target_tsm_variable.long_name = 'tsm'
 
-
     elif variable == 'chl':
         target_chl_variable = dataset.createVariable('chl', np.float32, ('time', 'latitude', 'longitude'),
                                                      fill_value=9999.0,
@@ -319,7 +314,7 @@ def unlogDINEOFoutput(proc_date):
             retrans_variable = np.where(retrans_variable > 200.0, 1.0, retrans_variable)
             target_tsm_variable[:, x:x + 1, :] = retrans_variable
         elif variable == 'chl':
-            convert_chl = np.ma.where((retrans_chl <= 100.0), retrans_variable, 100.0)
+            convert_chl = np.ma.where((retrans_variable <= 100.0), retrans_variable, 100.0)
             target_chl_variable[:, x:x + 1, :] = convert_chl
 
     input_file.close()
@@ -334,7 +329,11 @@ if __name__ == '__main__':
     else:
         proc_date = argv[1]
         print("Processing date: ", proc_date)
+        # exit(1)
 
+    # first step: demarine_input_prep/reproject_demarine_daily.py
+    from demarine_input_prep import reproject_demarine_daily
+    reproject_demarine_daily.reproject(proc_date)
     writeDINEOFconfFile(proc_date, input_variable)
 
     proc_year = int(proc_date[:4])

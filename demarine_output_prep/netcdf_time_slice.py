@@ -3,13 +3,13 @@ __author__ = 'carole'
 from os import path
 from netCDF4 import Dataset
 import jdcal
-from sandbox.carole.DINEOF_process.netcdf_methods import nc_time_slice  # create_nc_vars, create_netcdf_dataset_dimensions
+from demarine_output_prep.netcdf_methods import nc_time_slice  # create_nc_vars, create_netcdf_dataset_dimensions
 
 
-input_directory = out_file = 'C:/Users/carole/Documents/BC/BC_projects/De-Marine2/DINEOF/output_files/DeMarine_fine_2008_HIGLINT_noPRODWARN_noHISOLZEN_chl_EOF11_rec1'
-input_filename = 'retrans_DeMarine_fine_2008_HIGLINT_noPRODWARN_noHISOLZEN_chl_EOF11_rec1_output.nc'
+input_directory = out_file = '/data/carole/DeMarine_dineof_nrt/output_files/DINEOF_DeM_chl_20150520'
+input_filename = 'retrans_DINEOF_DeM_coarse_chl_output_20150520.nc'
 input_file = Dataset(path.join(input_directory, input_filename), mode='r')
-output_directory = 'C:/Users/carole/Documents/BC/BC_projects/De-Marine2/DINEOF/output_files/daylies/DeMarine_fine_2008_HIGLINT_noPRODWARN_noHISOLZEN_chl_EOF11_rec1'
+output_directory = '/data/carole/DeMarine_dineof_nrt/output_files/DINEOF_DeM_chl_20150520/daylies'
 
 width = len(input_file.dimensions['longitude'])
 height = len(input_file.dimensions['latitude'])

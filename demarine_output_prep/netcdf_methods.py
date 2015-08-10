@@ -44,8 +44,6 @@ def create_netcdf_dataset_dimensions_from_beam(some_product, output_file):
 def create_nc_vars(dataset, input_variables, output_variables, output_variables_units, output_variables_long_name,
                    output_variables_standard_name):
     for index, var in enumerate(input_variables):
-
-
         data_type = np.float32
         variable = dataset.createVariable(output_variables[index], data_type,
                                           ('time', 'depth', 'latitude', 'longitude'), fill_value=9999.0, zlib=True,
@@ -103,10 +101,10 @@ def nc_time_slice(width, height, timeindex, t, base_jd, output_directory, input_
     # output_variables_long_name = ['Chlorophyll a concentration']
     # output_variables_standard_name = ['CHL']
     input_variables = ['chl']
-    output_variables = ['CHL']
+    output_variables = ['chl']
     output_variables_units = ['mg/m^3']
     output_variables_long_name = ['Chlorophyll a concentration']
-    output_variables_standard_name = ['CHL']
+    output_variables_standard_name = ['chl']
     create_nc_vars(dataset, input_variables, output_variables,
                    output_variables_units, output_variables_long_name, output_variables_standard_name)
 

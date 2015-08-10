@@ -16,6 +16,11 @@ def getBackDate(backDay):
     _back_date = date.today() - timedelta(backDay)
     return _back_date
 
+def getBackDateStr(backDay):
+    _back_date = date.today() - timedelta(backDay)
+    return str(_back_date.year) + str(_back_date.month).zfill(2) + str(_back_date.day).zfill(2)
+
+
 def getDOY(_year, _month, _day):
     d1 = date(int(_year), int(_month), int(_day))
     d0 = date(int(_year)-1, 12, 31)
