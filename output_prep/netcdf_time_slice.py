@@ -3,7 +3,7 @@ __author__ = 'carole'
 from os import path
 from netCDF4 import Dataset
 import jdcal
-from demarine_output_prep.netcdf_methods import nc_time_slice  # create_nc_vars, create_netcdf_dataset_dimensions
+from output_prep.netcdf_methods import nc_time_slice  # create_nc_vars, create_netcdf_dataset_dimensions
 
 
 input_directory = out_file = '/data/carole/DeMarine_dineof_nrt/output_files/DINEOF_DeM_chl_20150520'

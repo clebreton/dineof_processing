@@ -6,7 +6,7 @@ from sys import argv, exit
 from conf.paths import trigger_dir
 from conf.utilities import getBackDateStr
 from pathlib import Path
-from demarine_input_prep.demarine_paths import modisL3_TSMBasePath
+from input_prep.demarine_paths import modisL3_TSMBasePath
 from glob import glob
 
 def printUsage():
@@ -38,9 +38,9 @@ if __name__ == '__main__':
     print(procDate, procYear, procMonth, procDay, _sp, _sp.exists())
     # exit(1)
 
-    if _sp.exists() and not _tp.exists():
+    if _sp.exists():# and not _tp.exists():
         print("New source file found. Starting DINEOF processing...")
-        _tp.touch() # Avoid multiple processings through crontab
+        # _tp.touch() # Avoid multiple processings through crontab
         # Processing part comes here
         syscall = "/bin/bash -c \"export PYTHONPATH=/data/carole/dineof_processing; " \
                   "python3 /data/carole/dineof_processing/control/processDINEOF.py " + procDate + "\""
@@ -49,4 +49,5 @@ if __name__ == '__main__':
     else:
         print("\nNo new source file found. Nothing to do.\n")
         exit(1)
-#TODO make break types clearer
+
+# TODO make break criteria clearer

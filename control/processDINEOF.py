@@ -2,20 +2,23 @@
 
 __author__ = 'uwe'
 
-from datetime import date, timedelta
+from datetime import date
 from os import makedirs, system
 from os.path import basename, exists, join
 from sys import argv, exit
-from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_coarse_nc_file, \
-    watermask_coarse_dim_file, dineof_executable
+from glob import glob
+from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_nc_file, \
+    watermask_dim_file, dineof_executable
 from conf.DINEOFparams import variables, valid_pixel_threshold, input_variable
 from conf.utilities import getBackDateStr as getBackDate
+from input_prep.utils import getProcDateStrings, getProductDateString
 import conf.DINEOFconstants as dc
 
 import snappy
 from netCDF4 import Dataset
 import numpy as np
 import jdcal
+import re
 
 
 def printUsage():
@@ -26,21 +29,26 @@ def printUsage():
 
 def getInputProductsList(delta_days):
     inputProductsList = []
-    for day in range(-10 + delta_days, 365):
+    for day in range(delta_days, delta_days + 365):
         _backDate = getBackDate(day)
-        inputProduct = join(inputBaseDir, 'reprojected_DeMarine_' + _backDate + '_coarse_grid.dim')
-        inputProductsList.append(inputProduct)
+        procDateStrings = getProcDateStrings(_backDate)
+        inputProductPath = glob(inputBaseDir + '*' + procDateStrings[4] + '*dim')
+        inputProductsList.append(inputProductPath[0])
     inputProductsList.sort()
+    # print(inputProductsList)
+    # exit(1)
     return inputProductsList
 
 
-def count_water_pixels(watermask_coarse_dim_file, width, height):
-    watermask_product = snappy.ProductIO.readProduct(watermask_coarse_dim_file)
+def count_water_pixels(watermask_dim_file, width, height):
+    watermask_product = snappy.ProductIO.readProduct(watermask_dim_file)
     water_band = watermask_product.getBand('land_water_fraction')
+    print(water_band, width, height)
+
     waterpixel_count = 0
     for y in range(height):
         for x in range(width):
-            if water_band.getSampleFloat(x, y) == 1:  # for band math created
+            if water_band.getSampleInt(x, y) == 100:  # for band math created
                 waterpixel_count += 1
     if waterpixel_count == 0:
         print('Product location does not have any water pixels')
@@ -81,7 +89,7 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write(dc.dataPart)
         conf_file.write("data = ['" + getDINEOFinputFileName(proc_date, input_variable) + "#CHL_mean']\n")
         conf_file.write(dc.maskPart)
-        conf_file.write("mask = ['" + watermask_coarse_nc_file + "#mask']\n")
+        conf_file.write("mask = ['" + watermask_nc_file + "#mask']\n")
         conf_file.write(dc.timePart)
         conf_file.write("time = '" + getDINEOFinputFileName(proc_date, input_variable) + "#time'\n")
         conf_file.write(dc.nevPart)
@@ -104,17 +112,21 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write(dc.eopfPart)
 
 
-def makeDINEOFcube(proc_date, fileList):
+def makeDINEOFcube(proc_date, fileList, first, last):
     skippedFilesLogPath = dineof_inputDir + 'skipped_files_DeM_' + proc_date + '.txt'
     skippedFilesLog = open(skippedFilesLogPath, 'a')
-    startDate_date = int(jdcal.gcal2jd(int(basename(fileList[0])[21:25]), int(basename(fileList[0])[25:27]),
-                                       int(basename(fileList[0])[27:29]))[1])
-    endDate_date = int(jdcal.gcal2jd(int(basename(fileList[-1])[21:25]), int(basename(fileList[-1])[25:27]),
-                                     int(basename(fileList[-1])[27:29]))[1])
+    startDate_date = int(jdcal.gcal2jd(int(first[0:4]), int(first[5:7]),
+                                       int(first[8:10]))[1])
+    endDate_date = int(jdcal.gcal2jd(int(last[0:4]), int(last[5:7]),
+                                       int(last[8:10]))[1])
     dataset = Dataset(getDINEOFinputFileName(proc_date, input_variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
     earliestProduct = snappy.ProductIO.readProduct(fileList[0])
-    width = earliestProduct.getSceneRasterWidth()
-    height = earliestProduct.getSceneRasterHeight()
+    # snappy delivers wrong values with subsetted products!!
+    width = 697
+    height = 534
+    # width = earliestProduct.getSceneRasterWidth()
+    # height = earliestProduct.getSceneRasterHeight()
+    # print(width, height)
     dataset.createDimension("longitude", width)
     dataset.createDimension("latitude", height)
     dataset.createDimension("time", None)
@@ -157,7 +169,7 @@ def makeDINEOFcube(proc_date, fileList):
                                           zlib=True,
                                           complevel=4, least_significant_digit=3)
         variable.missing_value = 9999.0
-    waterpixel_count = count_water_pixels(watermask_coarse_dim_file, width, height)
+    waterpixel_count = count_water_pixels(watermask_dim_file, width, height)
 
     time_index = 0
     skipped_products_count = 0
@@ -331,22 +343,31 @@ if __name__ == '__main__':
         print("Processing date: ", proc_date)
         # exit(1)
 
-    # first step: demarine_input_prep/reproject_demarine_daily.py
-    from demarine_input_prep import reproject_demarine_daily
-    reproject_demarine_daily.reproject(proc_date)
-    writeDINEOFconfFile(proc_date, input_variable)
+    # first step: input_prep/subset_dineof_daily.py
+    from input_prep.subset_dineof_daily import subset
+    subset(proc_date)
 
-    proc_year = int(proc_date[:4])
-    proc_month = int(proc_date[4:6])
-    proc_day = int(proc_date[6:])
+    # exit(1)
+    writeDINEOFconfFile(proc_date, input_variable)
+    procDateStrings = getProcDateStrings(proc_date)
+
+    proc_year = int(procDateStrings[0])
+    proc_month = int(procDateStrings[1])
+    proc_day = int(procDateStrings[2])
     proc_datetime = date(proc_year, proc_month, proc_day)
     delta_days = (date.today() - proc_datetime).days
     print("delta_days=", delta_days)
 
     inputProductsList = getInputProductsList(delta_days)
-    print(inputProductsList)
+    firstProductInList = inputProductsList[0]
+    firstDateString = getProductDateString(firstProductInList)
+    lastProductInList = inputProductsList[-1]
+    lastDateString = getProductDateString(lastProductInList)
+
+    print(firstDateString, lastDateString)
     # exit(1)
-    makeDINEOFcube(proc_date, inputProductsList)
+    makeDINEOFcube(proc_date, inputProductsList, firstDateString, lastDateString)
     dineof_call = dineof_executable + ' ' + getDINEOFconfFileName(proc_date)
-    system(dineof_call)
-    unlogDINEOFoutput(proc_date)
+    print(dineof_call)
+    # system(dineof_call)
+    # unlogDINEOFoutput(proc_date)

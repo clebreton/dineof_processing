@@ -21,8 +21,8 @@ import jdcal
 import time
 import snappy
 from netCDF4 import Dataset
-from demarine_output_prep.netcdf_methods import create_nc_vars, create_netcdf_dataset_dimensions_from_beam
-from demarine_input_prep.demarine_paths import modisL3_TSMDemarine_CoarseGrid_Path, modisL3_nc_CoarseGrid_Path, modisL3_TSMDemarine_FineGrid_Path, modisL3_nc_FineGrid_Path
+from output_prep.netcdf_methods import create_nc_vars, create_netcdf_dataset_dimensions_from_beam
+from input_prep.demarine_paths import modisL3_TSMDemarine_CoarseGrid_Path, modisL3_nc_CoarseGrid_Path, modisL3_TSMDemarine_FineGrid_Path, modisL3_nc_FineGrid_Path
 
 # input_variables = ['TSM_mean', 'CHL_mean', 'SST2_mean', 'KdPAR2_mean', 'PAR2_mean',
 #                    'num_obs', 'num_passes', 'CHL_sigma', 'CHL_counts', 'TSM_sigma', 'TSM_counts',

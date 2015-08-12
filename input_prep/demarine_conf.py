@@ -9,7 +9,7 @@ gptProcessor = beamBinDir + 'gpt.sh'
 pconvProcessor = beamBinDir + 'pconvert.sh'
 l3binningDir = '/data/carole/l3binning/'
 # beamProcessingConfDir ='/home/uwe/cronjobs/bc/eodata/beam_processing/conf/'
-beamProcessingConfDir ='/data/carole/dineof_processing/demarine_input_prep/'
+beamProcessingConfDir ='/data/carole/dineof_processing/input_prep/'
 
 DeMarine_fine_grid_graph_file = beamProcessingConfDir + 'reproject_BSH_fine.xml'
 DeMarine_coarse_grid_graph_file = beamProcessingConfDir + 'reproject_BSH_coarse.xml'

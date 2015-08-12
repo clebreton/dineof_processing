@@ -3,9 +3,9 @@ __author__ = 'carole'
 from sys import argv
 from os import makedirs, system
 from os.path import exists
-from demarine_input_prep.demarine_conf import gptProcessor, DeMarine_coarse_grid_graph_file
+from input_prep.demarine_conf import gptProcessor, DeMarine_coarse_grid_graph_file
 from conf.utilities import getDOY, ensureTrailingSlash
-from demarine_input_prep.demarine_paths import modisL3_TSMBasePath, modisL3_TSMDemarine_CoarseGrid_Path
+from input_prep.demarine_paths import modisL3_TSMBasePath, modisL3_TSMDemarine_CoarseGrid_Path
 
 def printUsage():
     print("Usage: ", argv[0], "<date>")
