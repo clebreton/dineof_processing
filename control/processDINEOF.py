@@ -3,13 +3,13 @@
 __author__ = 'uwe'
 
 from datetime import date
-from os import makedirs, system
-from os.path import basename, exists, join
+from os import makedirs, remove, system
+from os.path import exists, join
 from sys import argv, exit
 from glob import glob
 from conf.paths import inputBaseDir, dineof_inputDir, dineof_outputBaseDir, dineof_initDir, watermask_nc_file, \
     watermask_dim_file, dineof_executable
-from conf.DINEOFparams import variables, valid_pixel_threshold, input_variable
+from conf.params import variables, valid_pixel_threshold, input_variable, ref_band_name
 from conf.utilities import getBackDateStr as getBackDate
 from input_prep.utils import getProcDateStrings, getProductDateString
 import conf.DINEOFconstants as dc
@@ -81,6 +81,8 @@ def getUnlogOutputFileName(proc_date, input_variable):
 
 def writeDINEOFconfFile(proc_date, input_variable):
     conf_filePath = getDINEOFconfFileName(proc_date)
+    if exists(conf_filePath):
+        remove(conf_filePath)
     dineof_outputDir = join(dineof_outputBaseDir, "DINEOF_DeM_" + input_variable + "_" + proc_date + "/")
     if not exists(dineof_outputDir):
         makedirs(dineof_outputDir)
@@ -89,7 +91,7 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write(dc.dataPart)
         conf_file.write("data = ['" + getDINEOFinputFileName(proc_date, input_variable) + "#CHL_mean']\n")
         conf_file.write(dc.maskPart)
-        conf_file.write("mask = ['" + watermask_nc_file + "#mask']\n")
+        conf_file.write("mask = ['" + watermask_nc_file + "#land_water_fraction']\n")
         conf_file.write(dc.timePart)
         conf_file.write("time = '" + getDINEOFinputFileName(proc_date, input_variable) + "#time'\n")
         conf_file.write(dc.nevPart)
@@ -112,21 +114,26 @@ def writeDINEOFconfFile(proc_date, input_variable):
         conf_file.write(dc.eopfPart)
 
 
-def makeDINEOFcube(proc_date, fileList, first, last):
+def makeDINEOFcube(proc_date, fileList):
     skippedFilesLogPath = dineof_inputDir + 'skipped_files_DeM_' + proc_date + '.txt'
+    if exists(skippedFilesLogPath):
+        remove(skippedFilesLogPath)
     skippedFilesLog = open(skippedFilesLogPath, 'a')
-    startDate_date = int(jdcal.gcal2jd(int(first[0:4]), int(first[5:7]),
-                                       int(first[8:10]))[1])
-    endDate_date = int(jdcal.gcal2jd(int(last[0:4]), int(last[5:7]),
-                                       int(last[8:10]))[1])
+
+    firstProductInList = fileList[0]
+    firstDateString = getProductDateString(firstProductInList)
+    lastProductInList = fileList[-1]
+    lastDateString = getProductDateString(lastProductInList)
+    print(firstDateString, lastDateString)
+    startDate_date = int(jdcal.gcal2jd(int(firstDateString[0:4]), int(firstDateString[5:7]), int(firstDateString[8:10]))[1])
+    endDate_date = int(jdcal.gcal2jd(int(lastDateString[0:4]), int(lastDateString[5:7]), int(lastDateString[8:10]))[1])
     dataset = Dataset(getDINEOFinputFileName(proc_date, input_variable), mode='w', format='NETCDF3_CLASSIC')  # NETCDF4
-    earliestProduct = snappy.ProductIO.readProduct(fileList[0])
-    # snappy delivers wrong values with subsetted products!!
-    width = 697
-    height = 534
-    # width = earliestProduct.getSceneRasterWidth()
-    # height = earliestProduct.getSceneRasterHeight()
-    # print(width, height)
+    earliestProduct = snappy.ProductIO.readProduct(firstProductInList)
+    ref_band = earliestProduct.getBand(ref_band_name)
+    print(earliestProduct)
+    width = ref_band.getSceneRasterWidth()
+    height = ref_band.getSceneRasterHeight()
+    # exit(1)
     dataset.createDimension("longitude", width)
     dataset.createDimension("latitude", height)
     dataset.createDimension("time", None)
@@ -182,9 +189,8 @@ def makeDINEOFcube(proc_date, fileList, first, last):
     for date in range(startDate_date, endDate_date + 1):
         time_variable[time_index] = date - base_jd
         if file_index + 1 < len(fileList):
-            current_date = int(jdcal.gcal2jd(int(basename(fileList[file_index + 1])[21:25]),
-                                             int(basename(fileList[file_index + 1])[25:27]),
-                                             int(basename(fileList[file_index + 1])[27:29]))[1])
+            dateString = getProductDateString(fileList[file_index + 1])
+            current_date = int(jdcal.gcal2jd(int(dateString[0:4]), int(dateString[5:7]), int(dateString[8:10]))[1])
             if current_date <= date:
                 file_index += 1
 
@@ -359,15 +365,9 @@ if __name__ == '__main__':
     print("delta_days=", delta_days)
 
     inputProductsList = getInputProductsList(delta_days)
-    firstProductInList = inputProductsList[0]
-    firstDateString = getProductDateString(firstProductInList)
-    lastProductInList = inputProductsList[-1]
-    lastDateString = getProductDateString(lastProductInList)
-
-    print(firstDateString, lastDateString)
     # exit(1)
-    makeDINEOFcube(proc_date, inputProductsList, firstDateString, lastDateString)
+    makeDINEOFcube(proc_date, inputProductsList)
     dineof_call = dineof_executable + ' ' + getDINEOFconfFileName(proc_date)
     print(dineof_call)
-    # system(dineof_call)
-    # unlogDINEOFoutput(proc_date)
+    system(dineof_call)
+    unlogDINEOFoutput(proc_date)
